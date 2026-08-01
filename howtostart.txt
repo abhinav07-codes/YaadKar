@@ -1,0 +1,11 @@
+✅ The backend is now running with the updated prompt/schema.
+
+Exact steps to run it next time
+Open terminal
+cd c:\Users\abssa\Desktop\learnlens
+.\.venv311\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
+In Chrome, go to chrome://extensions
+Reload YaadKar
+Open a YouTube video
+Click Generate Notes
+That’s the full startup sequence. If you want, I can also add a run-yaadkar.bat file that does this automatically.

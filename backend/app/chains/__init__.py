@@ -1,0 +1,1 @@
+"""Chain definitions for YaadKar."""
