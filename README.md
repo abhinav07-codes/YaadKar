@@ -1,6 +1,6 @@
 # YaadKar
 
-YaadKar is a production-oriented Chrome extension that summarizes the currently open YouTube video by sending its URL to a FastAPI backend powered by LangChain and Groq.
+YaadKar is a Chrome extension that summarizes the currently open YouTube video by sending its URL to a FastAPI backend powered by LangChain and Groq.
 
 ## What is included
 
