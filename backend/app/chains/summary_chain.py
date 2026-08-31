@@ -4,7 +4,7 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 
-from app.config import API_BASE_URL, GROQ_API_KEY, MODEL_NAME
+from app.config import API_BASE_URL, GROQ_API_KEY, MODEL_NAME, normalize_groq_base_url
 from app.models.response import SummaryResponse
 from app.prompts.summary_prompt import SUMMARY_PROMPT_TEMPLATE
 
@@ -22,9 +22,7 @@ def build_summary_chain():
         input_variables=["transcript", "language"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
-    base_url = API_BASE_URL.rstrip('/')
-    if base_url.endswith('/openai/v1'):
-        base_url = base_url[: -len('/openai/v1')]
+    base_url = normalize_groq_base_url(API_BASE_URL)
 
     llm = ChatGroq(
         api_key=GROQ_API_KEY,
