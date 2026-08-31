@@ -18,11 +18,44 @@ def detect_transcript_language(transcript: str) -> str:
 
 def _get_preferred_transcript_languages() -> list[str]:
     """Return ordered language codes, preferring Hindi and English variants."""
-    return ["hi", "en", "en-IN", "en-US", "hi-IN", "ta", "te", "mr", "bn", "gu"]
+    return ["hi", "hi-IN", "en", "en-IN", "en-US", "ta", "te", "mr", "bn", "gu"]
 
 
 class TranscriptService:
     """Fetches and sanitizes YouTube transcripts."""
+
+    @staticmethod
+    def _fetch_with_language_candidates(api, video_id: str):
+        """Try Hindi-first transcript fetches before falling back to generated transcripts."""
+        candidate_lists = [
+            ["hi", "hi-IN", "en", "en-IN"],
+            ["hi", "en", "hi-IN", "en-IN"],
+            ["en", "hi", "en-IN", "hi-IN"],
+            ["hi", "en"],
+            ["en", "hi"],
+            ["hi-IN", "en-IN"],
+            ["hi"],
+            ["en"],
+        ]
+
+        for langs in candidate_lists:
+            try:
+                return api.fetch(video_id, languages=langs)
+            except NoTranscriptFound:
+                continue
+
+        try:
+            transcript_list = api.list(video_id)
+            available = [t.language_code for t in transcript_list]
+            for lang in _get_preferred_transcript_languages():
+                if lang in available:
+                    return transcript_list.find_transcript([lang]).fetch()
+            if available:
+                return transcript_list.find_generated_transcript(available).fetch()
+        except (NoTranscriptFound, TranscriptsDisabled, VideoUnavailable):
+            pass
+
+        raise NoTranscriptFound(f"No transcript found for video {video_id}")
 
     def fetch_transcript(self, url: str) -> str:
         video_id = extract_video_id(url)
@@ -32,20 +65,8 @@ class TranscriptService:
         api = YouTubeTranscriptApi()
 
         try:
-            transcript_entries = api.fetch(video_id, languages=_get_preferred_transcript_languages())
-        except NoTranscriptFound:
-            try:
-                transcript_list = api.list(video_id)
-                available = [t.language_code for t in transcript_list]
-                for lang in _get_preferred_transcript_languages():
-                    if lang in available:
-                        transcript_entries = transcript_list.find_transcript([lang]).fetch()
-                        break
-                else:
-                    transcript_entries = transcript_list.find_generated_transcript(available).fetch()
-            except (TranscriptsDisabled, VideoUnavailable, NoTranscriptFound) as exc:
-                raise RuntimeError("No transcript was found for this video.") from exc
-        except (TranscriptsDisabled, VideoUnavailable) as exc:
+            transcript_entries = self._fetch_with_language_candidates(api, video_id)
+        except (TranscriptsDisabled, VideoUnavailable, NoTranscriptFound) as exc:
             raise RuntimeError("No transcript was found for this video.") from exc
 
         return "\n".join(
