@@ -1,6 +1,9 @@
 const generateBtn = document.getElementById('generateBtn');
+const copyBtn = document.getElementById('copyBtn');
 const statusEl = document.getElementById('status');
 const resultsEl = document.getElementById('results');
+
+let currentNotesText = '';
 
 async function getCurrentTabUrl() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -12,8 +15,34 @@ function setStatus(message, isError = false) {
   statusEl.classList.toggle('error', isError);
 }
 
+function buildNotesText(data) {
+  const sections = [
+    { title: 'Summary', items: [data.summary] },
+    { title: 'Key Points', items: data.key_points },
+    { title: 'Detailed Explanation', items: data.detailed_explanation },
+    { title: 'Interview Questions', items: data.interview_questions },
+  ];
+
+  const lines = [];
+  sections.forEach((section) => {
+    lines.push(`${section.title}:`);
+    if (section.items.length) {
+      section.items.forEach((item, index) => {
+        lines.push(`${index + 1}. ${item}`);
+      });
+    } else {
+      lines.push('No content available.');
+    }
+    lines.push('');
+  });
+
+  return lines.join('\n').trim();
+}
+
 function renderResults(data) {
   resultsEl.innerHTML = '';
+  currentNotesText = buildNotesText(data);
+  copyBtn.hidden = !currentNotesText;
 
   const sections = [
     { title: 'Summary', items: [data.summary] },
@@ -48,8 +77,33 @@ function renderResults(data) {
   });
 }
 
+async function copyNotes() {
+  if (!currentNotesText) {
+    setStatus('No notes to copy yet.', true);
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(currentNotesText);
+    setStatus('Notes copied to clipboard.');
+  } catch {
+    try {
+      const temp = document.createElement('textarea');
+      temp.value = currentNotesText;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+      setStatus('Notes copied to clipboard.');
+    } catch {
+      setStatus('Unable to copy notes in this browser.', true);
+    }
+  }
+}
+
 async function generateNotes() {
   generateBtn.disabled = true;
+  copyBtn.hidden = true;
   setStatus('Fetching current video...');
   resultsEl.innerHTML = '';
 
@@ -95,3 +149,4 @@ async function generateNotes() {
 }
 
 generateBtn.addEventListener('click', generateNotes);
+copyBtn.addEventListener('click', copyNotes);

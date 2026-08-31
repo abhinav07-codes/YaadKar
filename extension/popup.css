@@ -37,6 +37,12 @@ button {
   cursor: pointer;
 }
 
+button.secondary {
+  margin-top: 8px;
+  background: #1e293b;
+  border: 1px solid #475569;
+}
+
 button:disabled {
   opacity: 0.7;
   cursor: wait;
