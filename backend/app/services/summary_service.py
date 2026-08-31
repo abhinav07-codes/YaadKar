@@ -19,7 +19,8 @@ class SummaryService:
 
     def summarize(self, url: str) -> SummaryResponse:
         transcript = self.transcript_service.fetch_transcript(url)
-        result = self._get_summary_chain().invoke({"transcript": transcript})
+        language = self.transcript_service.detect_transcript_language(transcript)
+        result = self._get_summary_chain().invoke({"transcript": transcript, "language": language})
         if isinstance(result, SummaryResponse):
             return result
 

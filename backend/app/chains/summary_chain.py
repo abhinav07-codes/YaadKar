@@ -19,7 +19,7 @@ def build_summary_chain():
     parser = PydanticOutputParser(pydantic_object=SummaryResponse)
     prompt = PromptTemplate(
         template=SUMMARY_PROMPT_TEMPLATE,
-        input_variables=["transcript"],
+        input_variables=["transcript", "language"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
     base_url = API_BASE_URL.rstrip('/')
